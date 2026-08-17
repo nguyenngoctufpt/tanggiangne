@@ -1,88 +1,106 @@
-
-<HTML>
-<HEAD>
-    <TITLE> New Document </TITLE>
-    <META NAME="Generator" CONTENT="EditPlus">
-    <META NAME="Author" CONTENT="">
-    <META NAME="Keywords" CONTENT="">
-    <META NAME="Description" CONTENT="">
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trái Tim Tặng Giang</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Great+Vibes&display=swap" rel="stylesheet">
     <style>
-        canvas {
-            position: absolute;
-            left: 0;
-            top: 0;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
             width: 100%;
             height: 100%;
-            background-color: #2e2e2e;
+            overflow: hidden;
+            background-color: #000000;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
         }
     </style>
-</HEAD>
-
-<BODY style=" background-color: #000;">
+</head>
+<body>
 
 <canvas id="heart"></canvas>
 
 <script>
     window.requestAnimationFrame =
-            window.__requestAnimationFrame ||
-            window.requestAnimationFrame ||
-            window.webkitRequestAnimationFrame ||
-            window.mozRequestAnimationFrame ||
-            window.oRequestAnimationFrame ||
-            window.msRequestAnimationFrame ||
-            (function () {
-                return function (callback, element) {
-                    var lastTime = element.__lastTime;
-                    if (lastTime === undefined) {
-                        lastTime = 0;
-                    }
-                    var currTime = Date.now();
-                    var timeToCall = Math.max(1, 33 - (currTime - lastTime));
-                    window.setTimeout(callback, timeToCall);
-                    element.__lastTime = currTime + timeToCall;
-                };
-            })();
-    window.isDevice = (/android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(((navigator.userAgent || navigator.vendor || window.opera)).toLowerCase()));
+        window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function (callback) {
+            window.setTimeout(callback, 1000 / 60);
+        };
+
+    var isDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+        (navigator.userAgent || navigator.vendor || window.opera || '').toLowerCase()
+    );
+
     var loaded = false;
     var init = function () {
         if (loaded) return;
         loaded = true;
-        var mobile = window.isDevice;
-        var koef = mobile ? 0.5 : 1;
+
         var canvas = document.getElementById('heart');
         var ctx = canvas.getContext('2d');
-        var width = canvas.width = koef * innerWidth;
-        var height = canvas.height = koef * innerHeight;
-        var rand = Math.random;
-        ctx.fillStyle = "rgba(0,0,0,1)";
-        ctx.fillRect(0, 0, width, height);
+        
+        var dpr = window.devicePixelRatio || 1;
+        var width, height;
 
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            ctx.scale(dpr, dpr);
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        resizeCanvas();
+
+        var rand = Math.random;
 
         var heartPosition = function (rad) {
-            //return [Math.sin(rad), Math.cos(rad)];
-            return [Math.pow(Math.sin(rad), 3), -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))];
+            return [
+                Math.pow(Math.sin(rad), 3),
+                -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))
+            ];
         };
+
         var scaleAndTranslate = function (pos, sx, sy, dx, dy) {
             return [dx + pos[0] * sx, dy + pos[1] * sy];
         };
 
-        window.addEventListener('resize', function () {
-            width = canvas.width = koef * innerWidth;
-            height = canvas.height = koef * innerHeight;
-            ctx.fillStyle = "rgba(0,0,0,1)";
-            ctx.fillRect(0, 0, width, height);
-        });
+        window.addEventListener('resize', resizeCanvas);
 
-        var traceCount = mobile ? 20 : 50;
+        var mobile = isDevice || width < 600;
+        var scaleBase = mobile ? Math.min(width, height) / 38 : Math.min(width, height) / 28;
+
+        var traceCount = mobile ? 25 : 50;
         var pointsOrigin = [];
         var i;
-        var dr = mobile ? 0.3 : 0.1;
-        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 210, 13, 0, 0));
-        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 150, 9, 0, 0));
-        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), 90, 5, 0, 0));
+        var dr = mobile ? 0.2 : 0.1;
+
+        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), scaleBase * 13, scaleBase * 0.8, 0, 0));
+        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), scaleBase * 9.5, scaleBase * 0.58, 0, 0));
+        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), scaleBase * 5.8, scaleBase * 0.35, 0, 0));
+        
         var heartPointsCount = pointsOrigin.length;
 
         var targetPoints = [];
@@ -106,10 +124,10 @@
                 q: ~~(rand() * heartPointsCount),
                 D: 2 * (i % 2) - 1,
                 force: 0.2 * rand() + 0.7,
-                f: "hsla(0," + ~~(40 * rand() + 60) + "%," + ~~(60 * rand() + 20) + "%,.3)",
+                f: "hsla(" + ~~(rand() * 20 + 340) % 360 + "," + ~~(40 * rand() + 60) + "%," + ~~(60 * rand() + 20) + "%,.4)",
                 trace: []
             };
-            for (var k = 0; k < traceCount; k++) e[i].trace[k] = {x: x, y: y};
+            for (var k = 0; k < traceCount; k++) e[i].trace[k] = { x: x, y: y };
         }
 
         var config = {
@@ -118,27 +136,25 @@
         };
 
         var time = 0;
-        var textLeft1 = 0;
-        var textLeft2 = -10;
         var loop = function () {
-            var mLeft = 50;
-            var mTop = 250;
             var n = -Math.cos(time);
             pulse((1 + n) * .5, (1 + n) * .5);
             time += ((Math.sin(time)) < 0 ? 9 : (n > 0.8) ? .2 : 1) * config.timeDelta;
-            ctx.fillStyle = "rgba(0,0,0,.1)";
+            
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
             ctx.fillRect(0, 0, width, height);
+
             for (i = e.length; i--;) {
                 var u = e[i];
                 var q = targetPoints[u.q];
+                if (!q) continue;
                 var dx = u.trace[0].x - q[0];
                 var dy = u.trace[0].y - q[1];
                 var length = Math.sqrt(dx * dx + dy * dy);
                 if (10 > length) {
                     if (0.95 < rand()) {
                         u.q = ~~(rand() * heartPointsCount);
-                    }
-                    else {
+                    } else {
                         if (0.99 < rand()) {
                             u.D *= -1;
                         }
@@ -155,15 +171,17 @@
                 u.trace[0].y += u.vy;
                 u.vx *= u.force;
                 u.vy *= u.force;
-                for (k = 0; k < u.trace.length - 1;) {
+
+                for (var k = 0; k < u.trace.length - 1;) {
                     var T = u.trace[k];
                     var N = u.trace[++k];
                     N.x -= config.traceK * (N.x - T.x);
                     N.y -= config.traceK * (N.y - T.y);
                 }
+
                 ctx.fillStyle = u.f;
                 for (k = 0; k < u.trace.length; k++) {
-                    ctx.fillRect(u.trace[k].x, u.trace[k].y, 1, 1);
+                    ctx.fillRect(u.trace[k].x, u.trace[k].y, 1.5, 1.5);
                 }
             }
 
@@ -172,16 +190,18 @@
             var scale = 1 + (1 + n) * 0.08;
             ctx.translate(width / 2, height / 2);
             ctx.scale(scale, scale);
-            ctx.font = 'bold ' + Math.round(58 * koef) + 'px "Great Vibes", "Dancing Script", cursive, sans-serif';
+
+            var fontSize = Math.max(36, Math.min(width, height) / 10);
+            ctx.font = 'bold ' + fontSize + 'px "Great Vibes", "Dancing Script", cursive, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
             // Outer vibrant magenta-pink glow
             ctx.shadowColor = '#ff1493';
-            ctx.shadowBlur = 24;
+            ctx.shadowBlur = 25;
 
             // Sparkling gradient
-            var grad = ctx.createLinearGradient(0, -25, 0, 25);
+            var grad = ctx.createLinearGradient(0, -fontSize / 2, 0, fontSize / 2);
             grad.addColorStop(0, '#ffffff');
             grad.addColorStop(0.4, '#ffc0cb');
             grad.addColorStop(1, '#ff1493');
@@ -196,7 +216,7 @@
 
             ctx.restore();
 
-            window.requestAnimationFrame(loop, canvas);
+            window.requestAnimationFrame(loop);
         };
 
         loop();
@@ -206,5 +226,5 @@
     if (s === 'complete' || s === 'loaded' || s === 'interactive') init();
     else document.addEventListener('DOMContentLoaded', init, false);
 </script>
-</BODY>
-</HTML>
+</body>
+</html>
