@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trái Tim Tặng Giang</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Great+Vibes&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
+        }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+        }
+    </style>
+</head>
+<body>
+
+<canvas id="heart"></canvas>
+
+<script>
+    window.requestAnimationFrame =
+        window.requestAnimationFrame ||
+        window.webkitRequestAnimationFrame ||
+        window.mozRequestAnimationFrame ||
+        window.oRequestAnimationFrame ||
+        window.msRequestAnimationFrame ||
+        function (callback) {
+            window.setTimeout(callback, 1000 / 60);
+        };
+
+    var isDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+        (navigator.userAgent || navigator.vendor || window.opera || '').toLowerCase()
+    );
+
+    var loaded = false;
+    var init = function () {
+        if (loaded) return;
+        loaded = true;
+
+        var canvas = document.getElementById('heart');
+        var ctx = canvas.getContext('2d');
+        
+        var dpr = window.devicePixelRatio || 1;
+        var width, height;
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width * dpr;
+            canvas.height = height * dpr;
+            canvas.style.width = width + 'px';
+            canvas.style.height = height + 'px';
+            ctx.scale(dpr, dpr);
+            ctx.fillStyle = "rgba(0,0,0,1)";
+            ctx.fillRect(0, 0, width, height);
+        }
+
+        resizeCanvas();
+
+        var rand = Math.random;
+
+        var heartPosition = function (rad) {
+            return [
+                Math.pow(Math.sin(rad), 3),
+                -(15 * Math.cos(rad) - 5 * Math.cos(2 * rad) - 2 * Math.cos(3 * rad) - Math.cos(4 * rad))
+            ];
+        };
+
+        var scaleAndTranslate = function (pos, sx, sy, dx, dy) {
+            return [dx + pos[0] * sx, dy + pos[1] * sy];
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+
+        var mobile = isDevice || width < 600;
+        var scaleBase = mobile ? Math.min(width, height) / 38 : Math.min(width, height) / 28;
+
+        var traceCount = mobile ? 25 : 50;
+        var pointsOrigin = [];
+        var i;
+        var dr = mobile ? 0.2 : 0.1;
+
+        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), scaleBase * 13, scaleBase * 0.8, 0, 0));
+        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), scaleBase * 9.5, scaleBase * 0.58, 0, 0));
+        for (i = 0; i < Math.PI * 2; i += dr) pointsOrigin.push(scaleAndTranslate(heartPosition(i), scaleBase * 5.8, scaleBase * 0.35, 0, 0));
+        
+        var heartPointsCount = pointsOrigin.length;
+
+        var targetPoints = [];
+        var pulse = function (kx, ky) {
+            for (i = 0; i < pointsOrigin.length; i++) {
+                targetPoints[i] = [];
+                targetPoints[i][0] = kx * pointsOrigin[i][0] + width / 2;
+                targetPoints[i][1] = ky * pointsOrigin[i][1] + height / 2;
+            }
+        };
+
+        var e = [];
+        for (i = 0; i < heartPointsCount; i++) {
+            var x = rand() * width;
+            var y = rand() * height;
+            e[i] = {
+                vx: 0,
+                vy: 0,
+                R: 2,
+                speed: rand() + 5,
+                q: ~~(rand() * heartPointsCount),
+                D: 2 * (i % 2) - 1,
+                force: 0.2 * rand() + 0.7,
+                f: "hsla(" + ~~(rand() * 20 + 340) % 360 + "," + ~~(40 * rand() + 60) + "%," + ~~(60 * rand() + 20) + "%,.4)",
+                trace: []
+            };
+            for (var k = 0; k < traceCount; k++) e[i].trace[k] = { x: x, y: y };
+        }
+
+        var config = {
+            traceK: 0.4,
+            timeDelta: 0.01
+        };
+
+        var time = 0;
+        var loop = function () {
+            var n = -Math.cos(time);
+            pulse((1 + n) * .5, (1 + n) * .5);
+            time += ((Math.sin(time)) < 0 ? 9 : (n > 0.8) ? .2 : 1) * config.timeDelta;
+            
+            ctx.fillStyle = "rgba(0,0,0,0.1)";
+            ctx.fillRect(0, 0, width, height);
+
+            for (i = e.length; i--;) {
+                var u = e[i];
+                var q = targetPoints[u.q];
+                if (!q) continue;
+                var dx = u.trace[0].x - q[0];
+                var dy = u.trace[0].y - q[1];
+                var length = Math.sqrt(dx * dx + dy * dy);
+                if (10 > length) {
+                    if (0.95 < rand()) {
+                        u.q = ~~(rand() * heartPointsCount);
+                    } else {
+                        if (0.99 < rand()) {
+                            u.D *= -1;
+                        }
+                        u.q += u.D;
+                        u.q %= heartPointsCount;
+                        if (0 > u.q) {
+                            u.q += heartPointsCount;
+                        }
+                    }
+                }
+                u.vx += -dx / length * u.speed;
+                u.vy += -dy / length * u.speed;
+                u.trace[0].x += u.vx;
+                u.trace[0].y += u.vy;
+                u.vx *= u.force;
+                u.vy *= u.force;
+
+                for (var k = 0; k < u.trace.length - 1;) {
+                    var T = u.trace[k];
+                    var N = u.trace[++k];
+                    N.x -= config.traceK * (N.x - T.x);
+                    N.y -= config.traceK * (N.y - T.y);
+                }
+
+                ctx.fillStyle = u.f;
+                for (k = 0; k < u.trace.length; k++) {
+                    ctx.fillRect(u.trace[k].x, u.trace[k].y, 1.5, 1.5);
+                }
+            }
+
+            // Draw text "Giang" in middle of heart with pulse effect & gradient glow
+            ctx.save();
+            var scale = 1 + (1 + n) * 0.08;
+            ctx.translate(width / 2, height / 2);
+            ctx.scale(scale, scale);
+
+            var fontSize = Math.max(36, Math.min(width, height) / 10);
+            ctx.font = 'bold ' + fontSize + 'px "Great Vibes", "Dancing Script", cursive, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Outer vibrant magenta-pink glow
+            ctx.shadowColor = '#ff1493';
+            ctx.shadowBlur = 25;
+
+            // Sparkling gradient
+            var grad = ctx.createLinearGradient(0, -fontSize / 2, 0, fontSize / 2);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.4, '#ffc0cb');
+            grad.addColorStop(1, '#ff1493');
+            ctx.fillStyle = grad;
+            ctx.fillText('Giang', 0, 0);
+
+            // Crisp inner white core highlight
+            ctx.shadowColor = '#ffffff';
+            ctx.shadowBlur = 4;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('Giang', 0, 0);
+
+            ctx.restore();
+
+            window.requestAnimationFrame(loop);
+        };
+
+        loop();
+    };
+
+    var s = document.readyState;
+    if (s === 'complete' || s === 'loaded' || s === 'interactive') init();
+    else document.addEventListener('DOMContentLoaded', init, false);
+</script>
+</body>
+</html>
